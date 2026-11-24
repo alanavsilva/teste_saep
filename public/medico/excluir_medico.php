@@ -2,27 +2,28 @@
 session_start();
 
 if (!isset($_SESSION['usuario'])) {
-    header('Location: index.php');
+    header("Location: ../../index.php");
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    include 'infra/conexao.php';
+include "../../infra/conexao.php";
 
-    $id = (int) $_POST['id'];
-    $stmt = $conexao->prepare('DELETE FROM medicos WHERE id = ?');
-    $stmt->bind_param('i', $id);
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $id = (int) $_POST["id"];
 
-    try {
-        $stmt->execute();
-    } catch (mysqli_sql_exception $erro) {
-        if ($erro->getCode() == 1451) {
-            exit('<meta charset="UTF-8">Este médico está vinculado a uma consulta.
-                  <a href="medicos.php">Voltar</a>');
-        }
-        throw $erro;
+    $sql = "SELECT id FROM consultas WHERE id_medico = $id";
+    $resultado = mysqli_query($conexao, $sql);
+
+    if (mysqli_num_rows($resultado) > 0) {
+        echo '<meta charset="UTF-8">';
+        echo '<p>Este médico não pode ser excluído porque tem uma consulta vinculada.</p>';
+        echo '<a href="../../medicos.php">Voltar</a>';
+        exit();
     }
+
+    $sql = "DELETE FROM medicos WHERE id = $id";
+    mysqli_query($conexao, $sql);
 }
 
-header('Location: medicos.php');
+header("Location: ../../medicos.php");
 exit();
